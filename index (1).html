@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compta avec Mohamed - السبورة التفاعلية</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#eef3f8;color:#172b4d}
+.container{max-width:1100px;margin:20px auto;padding:15px}
+.header{background:#0756a3;color:#fff;padding:22px;border-radius:16px 16px 0 0;text-align:center}
+.header h1{margin:0;font-size:28px}.header p{margin:8px 0 0}
+.board{background:#fff;padding:25px;border:3px solid #0756a3;box-shadow:0 5px 20px #0001}
+.lesson{text-align:center;margin-bottom:22px}.lesson input{width:90%;max-width:700px;padding:13px;font-size:20px;text-align:center;border:2px solid #0756a3;border-radius:10px}
+.exercise{background:#f4f8fc;border-right:5px solid #0756a3;padding:15px;margin-bottom:22px;border-radius:8px}
+.exercise h2{margin-top:0}.entry{display:grid;grid-template-columns:1fr 160px 1fr 160px;gap:10px}
+.entry input,.entry select{width:100%;padding:12px;border:1px solid #b8c7d9;border-radius:8px;font-size:16px;background:#fff}
+.buttons{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:22px 0}
+button{border:0;padding:12px 20px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:bold}
+.check{background:#087f5b;color:#fff}.example{background:#0756a3;color:#fff}.next{background:#e6a700;color:#fff}.clear{background:#777;color:#fff}
+.result{padding:18px;border-radius:10px;text-align:center;font-size:18px;font-weight:bold;display:none}
+.correct{background:#d3f9d8;color:#087f5b;display:block}.wrong{background:#ffe3e3;color:#c92a2a;display:block}
+.score{text-align:center;font-size:18px;font-weight:bold;margin:12px}
+.footer{text-align:center;padding:15px;background:#0756a3;color:#fff;border-radius:0 0 16px 16px}
+@media(max-width:750px){.container{margin:5px;padding:5px}.entry{grid-template-columns:1fr}.header h1{font-size:22px}.lesson input{width:100%}}
+</style>
+</head>
+<body>
+<div class="container">
+<header class="header">
+<h1>📚 Compta avec Mohamed</h1>
+<p>السبورة المحاسبية التفاعلية</p>
+</header>
+
+<main class="board">
+<div class="lesson"><input id="lessonTitle" value="السبورة التفاعلية للمحاسبة"></div>
+
+<section class="exercise">
+<h2 id="exerciseTitle">📝 التمرين 1</h2>
+<p id="exerciseText">قامت المؤسسة بشراء بضاعة نقدًا بمبلغ <strong>100,000 دج</strong>.</p>
+</section>
+
+<h2>القيد المحاسبي</h2>
+<div class="entry">
+<select id="debitAccount">
+<option value="">الحساب المدين</option>
+<option value="30">30 - المخزونات</option>
+<option value="401">401 - الموردون</option>
+<option value="512">512 - البنك</option>
+<option value="53">53 - الصندوق</option>
+<option value="60">60 - المشتريات</option>
+</select>
+<input id="debitAmount" type="number" min="0" placeholder="مبلغ المدين">
+<select id="creditAccount">
+<option value="">الحساب الدائن</option>
+<option value="30">30 - المخزونات</option>
+<option value="401">401 - الموردون</option>
+<option value="512">512 - البنك</option>
+<option value="53">53 - الصندوق</option>
+<option value="60">60 - المشتريات</option>
+</select>
+<input id="creditAmount" type="number" min="0" placeholder="مبلغ الدائن">
+</div>
+
+<div class="buttons">
+<button class="check" id="check">✅ تحقق</button>
+<button class="example" id="example">💡 إظهار الحل</button>
+<button class="next" id="next">➡️ التمرين التالي</button>
+<button class="clear" id="clear">🗑 مسح</button>
+</div>
+
+<div class="score" id="score">النقاط: 0 / 0</div>
+<div id="result" class="result" aria-live="polite"></div>
+</main>
+<footer class="footer">Compta avec Mohamed © 2026</footer>
+</div>
+
+<script>
+const exercises=[
+ {text:'قامت المؤسسة بشراء بضاعة نقدًا بمبلغ <strong>100,000 دج</strong>.',d:'30',c:'53',a:100000,
+  solution:'30 - المخزونات: مدين 100,000 دج<br>53 - الصندوق: دائن 100,000 دج'},
+ {text:'قامت المؤسسة بتسديد دين للمورد عن طريق البنك بمبلغ <strong>80,000 دج</strong>.',d:'401',c:'512',a:80000,
+  solution:'401 - الموردون: مدين 80,000 دج<br>512 - البنك: دائن 80,000 دج'},
+ {text:'قامت المؤسسة بإيداع مبلغ <strong>50,000 دج</strong> من الصندوق في البنك.',d:'512',c:'53',a:50000,
+  solution:'512 - البنك: مدين 50,000 دج<br>53 - الصندوق: دائن 50,000 دج'}
+];
+let index=0,attempted=0,points=0;
+const $=id=>document.getElementById(id);
+function render(){
+ $('exerciseTitle').textContent='📝 التمرين '+(index+1);
+ $('exerciseText').innerHTML=exercises[index].text;
+ ['debitAccount','creditAccount','debitAmount','creditAmount'].forEach(id=>$(id).value='');
+ $('result').className='result';$('result').style.display='none';
+}
+function check(){
+ const e=exercises[index];
+ const ok=$('debitAccount').value===e.d && $('creditAccount').value===e.c &&
+ Number($('debitAmount').value)===e.a && Number($('creditAmount').value)===e.a;
+ if(ok){points++;$('result').className='result correct';$('result').innerHTML='🎉 إجابة صحيحة!<br><br>'+e.solution}
+ else{$('result').className='result wrong';$('result').innerHTML='❌ الإجابة غير صحيحة. راجع الحسابات والمبالغ وحاول مرة أخرى.'}
+ attempted=Math.max(attempted, index+1);
+ $('score').textContent=`النقاط: ${points} / ${attempted}`;
+}
+$('check').onclick=check;
+$('example').onclick=()=>{const e=exercises[index];$('debitAccount').value=e.d;$('creditAccount').value=e.c;$('debitAmount').value=e.a;$('creditAmount').value=e.a;$('result').className='result correct';$('result').innerHTML='💡 الحل:<br><br>'+e.solution;$('result').style.display='block'};
+$('next').onclick=()=>{index=(index+1)%exercises.length;render()};
+$('clear').onclick=render;
+render();
+</script>
+</body>
+</html>
